@@ -22,6 +22,7 @@ rustdoc-args = ["--cfg", "docsrs"]
 aligners = { version = "0.0.10", default-features = false }
 cfg-if = "1.0.0"
 log = "0.4.17"
+md5 = "0.7.0"
 memchr = { version = "2.5.0", optional = true }
 memmap2 = "0.6.2"
 nom = "7.1.3"

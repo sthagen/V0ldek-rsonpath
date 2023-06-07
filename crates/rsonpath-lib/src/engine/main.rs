@@ -175,7 +175,9 @@ impl<'q, 'b, I: Input> Executor<'q, 'b, I> {
                 debug!("Stack = {:?}", self.stack);
                 debug!("State = {:?}", self.state);
                 debug!("====================");
-
+                if event.idx() % 1001 == 0 || event.idx()>550459910 {
+                    println!("offset:{}", event.idx());
+                }
                 self.next_event = None;
                 match event {
                     Structural::Colon(idx) => self.handle_colon(classifier, idx, result)?,

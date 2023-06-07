@@ -14,6 +14,7 @@ pub struct OwnedBytes {
 impl OwnedBytes {
     fn finalize_new(ptr: ptr::NonNull<u8>, len: usize, cap: usize) -> Self {
         let slice = unsafe { slice::from_raw_parts(ptr.as_ptr(), len) };
+        println!("digest:{:x}", md5::compute(&slice));
         let last_block = in_slice::pad_last_block(slice);
 
         Self {

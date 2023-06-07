@@ -2,6 +2,7 @@ use super::{borrowed::BorrowedBytesBlockIterator, error::InputError, in_slice, I
 use crate::query::JsonString;
 use memmap2::Mmap;
 use std::fs::File;
+use md5::compute;
 
 pub struct MmapInput {
     mmap: Mmap,
@@ -12,6 +13,7 @@ impl MmapInput {
     pub fn map_file(file: &File) -> Result<Self, InputError> {
         match unsafe { Mmap::map(file) } {
             Ok(mmap) => {
+                println!("md5:{:x}", md5::compute(&mmap));
                 let last_block = in_slice::pad_last_block(&mmap);
                 Ok(Self {
                     mmap,

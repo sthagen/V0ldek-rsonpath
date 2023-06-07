@@ -8,7 +8,7 @@ use rsonpath::{report_compiler_error, report_engine_error, report_parser_error};
 use rsonpath_lib::engine::main::MainEngine;
 use rsonpath_lib::engine::recursive::RecursiveEngine;
 use rsonpath_lib::engine::{Compiler, Engine};
-use rsonpath_lib::input::{BufferedInput, MmapInput, Input};
+use rsonpath_lib::input::{BufferedInput, MmapInput, Input, OwnedBytes};
 use rsonpath_lib::query::automaton::Automaton;
 use rsonpath_lib::query::JsonPathQuery;
 use rsonpath_lib::result::{CountResult, IndexResult, QueryResult};
@@ -90,7 +90,7 @@ fn run_with_args(args: &Args) -> Result<()> {
             }
         } else {
             let contents = get_contents(args.file_path.as_deref())?;
-            let input = BufferedInput::new(ReadString(contents, 0));
+            let input = OwnedBytes::new(&contents)?;
             match args.result {
                 ResultArg::Bytes => run::<IndexResult, _>(&query, &input, args.engine),
                 ResultArg::Count => run::<CountResult, _>(&query, &input, args.engine),
