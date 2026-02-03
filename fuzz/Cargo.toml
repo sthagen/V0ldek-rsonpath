@@ -18,7 +18,6 @@ path = "../crates/rsonpath-lib"
 
 [dependencies.rsonpath-syntax]
 path = "../crates/rsonpath-syntax"
-features = ["arbitrary"]
 
 # Prevent this from interfering with workspaces
 [workspace]
@@ -37,6 +36,12 @@ doc = false
 [[bin]]
 name = "query_fuzz_arbitrary_bytes"
 path = "fuzz_targets/query_fuzz_arbitrary_bytes.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "query_fuzz_round_trip"
+path = "fuzz_targets/query_fuzz_round_trip.rs"
 test = false
 doc = false
 
