@@ -19,6 +19,16 @@ can be worked on (for a feature), or that it is indeed a bug that we need to fix
 
 Go to [Discussions](https://github.com/V0ldek/rsonpath/discussions), where you can drop more open-ended questions and ideas without having to formulate them as detailed Issues!
 
+## Strict no-LLM policy
+
+No LLMs for code contributions.
+
+No LLMs for issues.
+
+No LLMs for comments/discussion.
+
+Violation of this policy is subject to a ban. 
+
 ## Code contributions
 
 You want to write code for the crate? Great! First, you need an issue to contribute to,
