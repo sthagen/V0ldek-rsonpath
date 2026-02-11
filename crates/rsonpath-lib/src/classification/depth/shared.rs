@@ -7,7 +7,7 @@ pub(super) mod vector_128;
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub(super) mod vector_256;
 
-#[allow(unused_macros)]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 macro_rules! depth_classifier {
     ($name:ident, $core:ident, $vector:ident, $size:literal, $mask_ty:ty) => {
         pub(crate) struct Constructor;
@@ -98,5 +98,5 @@ macro_rules! depth_classifier {
     };
 }
 
-#[allow(unused_imports)]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub(crate) use depth_classifier;
