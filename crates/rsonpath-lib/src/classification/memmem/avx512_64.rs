@@ -1,8 +1,5 @@
-use super::{shared::mask_64, shared::vector_256, *};
-use crate::{
-    classification::mask::m64,
-    input::{error::InputErrorConvertible as _, InputBlock as _, InputBlockIterator as _},
-};
+use super::{shared::mask_64, shared::vector_512, *};
+use crate::input::{error::InputErrorConvertible as _, InputBlockIterator as _};
 
 const SIZE: usize = 64;
 
@@ -10,7 +7,7 @@ pub(crate) struct Constructor;
 
 impl MemmemImpl for Constructor {
     type Classifier<'i, 'b, 'r, I, R>
-        = Avx2MemmemClassifier64<'i, 'b, 'r, I, R>
+        = Avx512MemmemClassifier64<'i, 'b, 'r, I, R>
     where
         I: Input + 'i,
         <I as Input>::BlockIterator<'i, 'r, R, BLOCK_SIZE>: 'b,
@@ -30,7 +27,7 @@ impl MemmemImpl for Constructor {
     }
 }
 
-pub(crate) struct Avx2MemmemClassifier64<'i, 'b, 'r, I, R>
+pub(crate) struct Avx512MemmemClassifier64<'i, 'b, 'r, I, R>
 where
     I: Input,
     R: InputRecorder<I::Block<'i, SIZE>> + 'r,
@@ -39,7 +36,7 @@ where
     iter: &'b mut I::BlockIterator<'i, 'r, R, SIZE>,
 }
 
-impl<'i, 'b, 'r, I, R> Avx2MemmemClassifier64<'i, 'b, 'r, I, R>
+impl<'i, 'b, 'r, I, R> Avx512MemmemClassifier64<'i, 'b, 'r, I, R>
 where
     I: Input,
     R: InputRecorder<I::Block<'i, SIZE>>,
@@ -51,18 +48,12 @@ where
         label: &StringPattern,
         mut offset: usize,
     ) -> Result<Option<(usize, I::Block<'i, SIZE>)>, InputError> {
-        let classifier = vector_256::BlockClassifier256::new(b'"', b'"');
+        let classifier = vector_512::BlockClassifier512::new(b'"', b'"');
         let mut previous_block: u64 = 0;
-
         while let Some(block) = self.iter.next().e()? {
-            let (block1, block2) = block.halves();
-            let classified1 = classifier.classify_block(block1);
-            let classified2 = classifier.classify_block(block2);
+            let classified = classifier.classify_block(&block);
 
-            let first_bitmask = m64::combine_32(classified1.first, classified2.first);
-            let second_bitmask = m64::combine_32(classified1.second, classified2.second);
-
-            let mut result = (previous_block | (first_bitmask << 1)) & second_bitmask;
+            let mut result = (previous_block | (classified.first << 1)) & classified.second;
             while result != 0 {
                 let idx = result.trailing_zeros() as usize;
                 if self
@@ -76,7 +67,7 @@ where
             }
 
             offset += SIZE;
-            previous_block = first_bitmask >> (SIZE - 1);
+            previous_block = classified.first >> (SIZE - 1);
         }
 
         Ok(None)
@@ -91,32 +82,32 @@ where
         label: &StringPattern,
         mut offset: usize,
     ) -> Result<Option<(usize, I::Block<'i, SIZE>)>, InputError> {
-        let classifier = vector_256::BlockClassifier256::new(label.unquoted()[0], b'"');
+        let classifier = vector_512::BlockClassifier512::new(label.unquoted()[0], b'"');
         let mut previous_block: u64 = 0;
 
         while let Some(block) = self.iter.next().e()? {
-            let (block1, block2) = block.halves();
-            let classified1 = classifier.classify_block(block1);
-            let classified2 = classifier.classify_block(block2);
+            let classified = classifier.classify_block(&block);
 
-            let first_bitmask = m64::combine_32(classified1.first, classified2.first);
-            let second_bitmask = m64::combine_32(classified1.second, classified2.second);
-
-            if let Some(res) =
-                mask_64::find_in_mask(self.input, label, previous_block, first_bitmask, second_bitmask, offset)?
-            {
+            if let Some(res) = mask_64::find_in_mask(
+                self.input,
+                label,
+                previous_block,
+                classified.first,
+                classified.second,
+                offset,
+            )? {
                 return Ok(Some((res, block)));
             }
 
             offset += SIZE;
-            previous_block = first_bitmask >> (SIZE - 1);
+            previous_block = classified.first >> (SIZE - 1);
         }
 
         Ok(None)
     }
 
     #[inline(always)]
-    unsafe fn find_label_avx2(
+    unsafe fn find_label_avx512(
         &mut self,
         label: &StringPattern,
         mut offset: usize,
@@ -127,29 +118,31 @@ where
             return self.find_letter(label, offset);
         }
 
-        let classifier = vector_256::BlockClassifier256::new(label.unquoted()[0], label.unquoted()[1]);
+        let classifier = vector_512::BlockClassifier512::new(label.unquoted()[0], label.unquoted()[1]);
         let mut previous_block: u64 = 0;
         while let Some(block) = self.iter.next().e()? {
-            let (block1, block2) = block.halves();
-            let classified1 = classifier.classify_block(block1);
-            let classified2 = classifier.classify_block(block2);
+            let classified = classifier.classify_block(&block);
 
-            let first_bitmask = m64::combine_32(classified1.first, classified2.first);
-            let second_bitmask = m64::combine_32(classified1.second, classified2.second);
-
-            if let Some(res) =
-                mask_64::find_in_mask(self.input, label, previous_block, first_bitmask, second_bitmask, offset)?
-            {
+            if let Some(res) = mask_64::find_in_mask(
+                self.input,
+                label,
+                previous_block,
+                classified.first,
+                classified.second,
+                offset,
+            )? {
                 return Ok(Some((res, block)));
             }
+
             offset += SIZE;
-            previous_block = first_bitmask >> (SIZE - 1);
+            previous_block = classified.first >> (SIZE - 1);
         }
+
         Ok(None)
     }
 }
 
-impl<'i, 'b, 'r, I, R> Memmem<'i, 'b, 'r, I, SIZE> for Avx2MemmemClassifier64<'i, 'b, 'r, I, R>
+impl<'i, 'b, 'r, I, R> Memmem<'i, 'b, 'r, I, SIZE> for Avx512MemmemClassifier64<'i, 'b, 'r, I, R>
 where
     I: Input,
     R: InputRecorder<I::Block<'i, SIZE>>,
@@ -169,6 +162,6 @@ where
         }
         let next_block_offset = self.iter.get_offset();
         // SAFETY: target feature invariant
-        unsafe { self.find_label_avx2(label, next_block_offset) }
+        unsafe { self.find_label_avx512(label, next_block_offset) }
     }
 }

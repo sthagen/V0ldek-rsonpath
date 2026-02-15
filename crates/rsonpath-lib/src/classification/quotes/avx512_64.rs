@@ -1,17 +1,17 @@
 use super::{
-    shared::{mask_64, vector_256},
+    shared::{mask_64, vector_512},
     *,
 };
-use crate::{block, classification::mask::m64, debug, input::error::InputErrorConvertible as _};
+use crate::{block, debug, input::error::InputErrorConvertible as _};
 use std::marker::PhantomData;
 
-shared::quote_classifier!(Avx2QuoteClassifier64, BlockAvx2Classifier, 64, u64);
+shared::quote_classifier!(Avx512QuoteClassifier64, BlockAvx512Classifier, 64, u64);
 
-struct BlockAvx2Classifier {
+struct BlockAvx512Classifier {
     internal_classifier: mask_64::BlockClassifier64Bit,
 }
 
-impl BlockAvx2Classifier {
+impl BlockAvx512Classifier {
     fn new() -> Self {
         Self {
             internal_classifier: mask_64::BlockClassifier64Bit::new(),
@@ -19,15 +19,13 @@ impl BlockAvx2Classifier {
     }
 
     #[inline(always)]
-    unsafe fn classify<'a, B: InputBlock<'a, 64>>(&mut self, blocks: &B) -> u64 {
-        block!(blocks[..64]);
+    unsafe fn classify<'a, B: InputBlock<'a, 64>>(&mut self, block: &B) -> u64 {
+        block!(block[..64]);
 
-        let (block1, block2) = blocks.halves();
-        let classification1 = vector_256::classify_block(block1);
-        let classification2 = vector_256::classify_block(block2);
+        let classification = vector_512::classify_block(block);
 
-        let slashes = m64::combine_32(classification1.slashes, classification2.slashes);
-        let quotes = m64::combine_32(classification1.quotes, classification2.quotes);
+        let slashes = classification.slashes;
+        let quotes = classification.quotes;
 
         self.internal_classifier.classify(slashes, quotes)
     }
@@ -46,12 +44,18 @@ mod tests {
     #[test_case("", 0)]
     #[test_case("abcd", 0)]
     #[test_case(r#""abcd""#, 0b01_1111)]
-    #[test_case(r#""num": 42, "string": "something" "#, 0b0_0111_1111_1110_0011_1111_1000_0000_1111)]
+    #[test_case(
+        r#""number": 42, "string": "something" "#,
+        0b0011_1111_1111_0001_1111_1100_0000_0111_1111
+    )]
     #[test_case(r#"abc\"abc\""#, 0b00_0000_0000)]
     #[test_case(r#"abc\\"abc\\""#, 0b0111_1110_0000)]
-    #[test_case(r#"{"aaa":[{},{"b":{"c":[1,2,3]}}],"#, 0b0000_0000_0000_0110_0011_0000_0001_1110)]
+    #[test_case(
+        r#"{"aaa":[{},{"b":{"c":[1,2,3]}}],"e":{"a":[[],[1,2,3],"#,
+        0b0_0000_0000_0000_0110_0011_0000_0000_0000_0110_0011_0000_0001_1110
+    )]
     fn single_block(str: &str, expected: u64) {
-        if !std::arch::is_x86_feature_detected!("avx2") {
+        if !std::arch::is_x86_feature_detected!("avx512f") {
             return;
         }
 

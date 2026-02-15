@@ -176,6 +176,10 @@ pub(crate) mod shared;
 pub(crate) mod avx2_32;
 #[cfg(target_arch = "x86_64")]
 pub(crate) mod avx2_64;
+#[cfg(target_arch = "x86_64")]
+pub(crate) mod avx512_64;
+#[cfg(target_arch = "aarch64")]
+pub(crate) mod neon_64;
 #[cfg(target_arch = "x86")]
 pub(crate) mod ssse3_32;
 #[cfg(target_arch = "x86_64")]

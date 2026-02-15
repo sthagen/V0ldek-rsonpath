@@ -123,7 +123,8 @@ test-full: (gen-tests)
     just test-book
 
 # Run E2E engine tests on all combinations of SIMD features for x86 platforms.
-test-x86-simd:
+test-x86-simd:    
+    RSONPATH_UNSAFE_FORCE_SIMD="avx512;fast_quotes;fast_popcnt" cargo test -p rsonpath-test --tests -q
     RSONPATH_UNSAFE_FORCE_SIMD="avx2;fast_quotes;fast_popcnt" cargo test -p rsonpath-test --tests -q
     RSONPATH_UNSAFE_FORCE_SIMD="ssse3;fast_quotes;fast_popcnt" cargo test -p rsonpath-test --tests -q
     RSONPATH_UNSAFE_FORCE_SIMD="ssse3;fast_quotes;slow_popcnt" cargo test -p rsonpath-test --tests -q
@@ -133,6 +134,12 @@ test-x86-simd:
     RSONPATH_UNSAFE_FORCE_SIMD="sse2;fast_quotes;slow_popcnt" cargo test -p rsonpath-test --tests -q
     RSONPATH_UNSAFE_FORCE_SIMD="sse2;slow_quotes;fast_popcnt" cargo test -p rsonpath-test --tests -q
     RSONPATH_UNSAFE_FORCE_SIMD="sse2;slow_quotes;slow_popcnt" cargo test -p rsonpath-test --tests -q
+    RSONPATH_UNSAFE_FORCE_SIMD="nosimd;slow_quotes;slow_popcnt" cargo test -p rsonpath-test --tests -q
+
+# Run E2E engine tests on all combinations of SIMD features for ARM platforms.
+test-arm-simd:
+    RSONPATH_UNSAFE_FORCE_SIMD="neon;fast_quotes;fast_popcnt" cargo test -p rsonpath-test --tests -q
+    RSONPATH_UNSAFE_FORCE_SIMD="neon;slow_quotes;fast_popcnt" cargo test -p rsonpath-test --tests -q
     RSONPATH_UNSAFE_FORCE_SIMD="nosimd;slow_quotes;slow_popcnt" cargo test -p rsonpath-test --tests -q
 
 # Run doctests on the library.

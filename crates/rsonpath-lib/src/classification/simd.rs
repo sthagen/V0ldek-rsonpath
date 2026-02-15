@@ -217,6 +217,9 @@ use crate::{
 use cfg_if::cfg_if;
 use std::{fmt::Display, marker::PhantomData};
 
+#[cfg(target_arch = "aarch64")]
+pub(super) mod neon;
+
 /// All SIMD capabilities of the engine and classifier types.
 pub(crate) trait Simd: Copy {
     /// The implementation of [`QuoteClassifiedIterator`] of this SIMD configuration.
@@ -461,6 +464,10 @@ pub(crate) enum SimdTag {
     Ssse3,
     /// AVX2 detected.
     Avx2,
+    /// AVX512 detected.
+    Avx512,
+    /// ARM NEON detected.
+    Neon,
 }
 
 /// Runtime-detected SIMD configuration guiding how to construct a [`Simd`] implementation for the engine.
@@ -503,6 +510,8 @@ impl SimdConfiguration {
             "sse2" => Some(SimdTag::Sse2),
             "ssse3" => Some(SimdTag::Ssse3),
             "avx2" => Some(SimdTag::Avx2),
+            "avx512" => Some(SimdTag::Avx512),
+            "neon" => Some(SimdTag::Neon),
             _ => None,
         };
         let quotes = match quotes_str.to_ascii_lowercase().as_ref() {
@@ -553,9 +562,21 @@ pub(crate) fn configure() -> SimdConfiguration {
             let fast_quotes = false;
             let fast_popcnt = false;
         }
+        else if #[cfg(any(target_arch = "aarch64"))]
+        {
+            let highest_simd = SimdTag::Neon;
+            let fast_quotes = std::arch::is_aarch64_feature_detected!("aes");
+            let fast_popcnt = true; // All aarch64s have popcnt.
+        }
         else if #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
         {
-            let highest_simd = if is_x86_feature_detected!("avx2") {
+            #[cfg(target_arch = "x86")]
+            let is_64_bit = false;
+            #[cfg(target_arch = "x86_64")]
+            let is_64_bit = true;
+            let highest_simd = if is_x86_feature_detected!("avx512f") && is_x86_feature_detected!("avx512bw") && is_64_bit {
+                SimdTag::Avx512
+            } else if is_x86_feature_detected!("avx2") {
                 SimdTag::Avx2
             } else if is_x86_feature_detected!("ssse3") {
                 SimdTag::Ssse3
@@ -591,6 +612,8 @@ impl Display for SimdConfiguration {
             SimdTag::Sse2 => "sse2",
             SimdTag::Ssse3 => "ssse3",
             SimdTag::Avx2 => "avx2",
+            SimdTag::Avx512 => "avx512",
+            SimdTag::Neon => "neon",
         };
         let quote_desc = if self.fast_quotes { "fast_quotes" } else { "slow_quotes" };
         let popcnt_desc = if self.fast_popcnt { "fast_popcnt" } else { "slow_popcnt" };
@@ -602,19 +625,51 @@ impl Display for SimdConfiguration {
 pub(crate) const NOSIMD: usize = 0;
 
 cfg_if! {
-    if #[cfg(any(target_arch = "x86_64", target_arch = "x86"))] {
-        pub(crate) const AVX2_PCLMULQDQ_POPCNT: usize = 1;
-        pub(crate) const SSSE3_PCLMULQDQ_POPCNT: usize = 2;
-        pub(crate) const SSSE3_PCLMULQDQ: usize = 3;
-        pub(crate) const SSSE3_POPCNT: usize = 4;
-        pub(crate) const SSSE3: usize = 5;
-        pub(crate) const SSE2_PCLMULQDQ_POPCNT: usize = 6;
-        pub(crate) const SSE2_PCLMULQDQ: usize = 7;
-        pub(crate) const SSE2_POPCNT: usize = 8;
-        pub(crate) const SSE2: usize = 9;
+    if #[cfg(any(target_arch = "aarch64"))] {
+        pub(crate) const NEON_AES: usize = 11;
+        pub(crate) const NEON: usize = 12;
 
         macro_rules! dispatch_simd {
             ($simd:expr; $( $arg:expr ),* => fn $( $fn:tt )*) => {{
+                #[target_feature(enable = "neon")]
+                #[target_feature(enable = "aes")]
+                unsafe fn neon_aes $($fn)*
+                #[target_feature(enable = "neon")]
+                unsafe fn neon $($fn)*
+                fn nosimd $($fn)*
+
+                let simd = $simd;
+
+                // SAFETY: depends on the provided SimdConfig, which cannot be incorrectly constructed.
+                unsafe {
+                    match simd.dispatch_tag() {
+                        $crate::classification::simd::NEON_AES => neon_aes($($arg),*),
+                        $crate::classification::simd::NEON => neon($($arg),*),
+                        _ => nosimd($($arg),*),
+                    }
+                }
+            }};
+        }
+    }
+    else if #[cfg(any(target_arch = "x86_64", target_arch = "x86"))] {
+        pub(crate) const AVX512_PCLMULQDQ_POPCNT: usize = 1;
+        pub(crate) const AVX2_PCLMULQDQ_POPCNT: usize = 2;
+        pub(crate) const SSSE3_PCLMULQDQ_POPCNT: usize = 3;
+        pub(crate) const SSSE3_PCLMULQDQ: usize = 4;
+        pub(crate) const SSSE3_POPCNT: usize = 5;
+        pub(crate) const SSSE3: usize = 6;
+        pub(crate) const SSE2_PCLMULQDQ_POPCNT: usize = 7;
+        pub(crate) const SSE2_PCLMULQDQ: usize = 8;
+        pub(crate) const SSE2_POPCNT: usize = 9;
+        pub(crate) const SSE2: usize = 10;
+
+        macro_rules! dispatch_simd {
+            ($simd:expr; $( $arg:expr ),* => fn $( $fn:tt )*) => {{
+                #[target_feature(enable = "avx512f")]
+                #[target_feature(enable = "avx512bw")]
+                #[target_feature(enable = "pclmulqdq")]
+                #[target_feature(enable = "popcnt")]
+                unsafe fn avx512_pclmulqdq_popcnt $($fn)*
                 #[target_feature(enable = "avx2")]
                 #[target_feature(enable = "pclmulqdq")]
                 #[target_feature(enable = "popcnt")]
@@ -650,6 +705,7 @@ cfg_if! {
                 // SAFETY: depends on the provided SimdConfig, which cannot be incorrectly constructed.
                 unsafe {
                     match simd.dispatch_tag() {
+                        $crate::classification::simd::AVX512_PCLMULQDQ_POPCNT => avx512_pclmulqdq_popcnt($($arg),*),
                         $crate::classification::simd::AVX2_PCLMULQDQ_POPCNT => avx2_pclmulqdq_popcnt($($arg),*),
                         $crate::classification::simd::SSSE3_PCLMULQDQ_POPCNT => ssse3_pclmulqdq_popcnt($($arg),*),
                         $crate::classification::simd::SSSE3_PCLMULQDQ => ssse3_pclmulqdq($($arg),*),
@@ -683,7 +739,20 @@ cfg_if! {
                     let conf = $conf;
 
                     match conf.highest_simd() {
-                        // AVX2 implies all other optimizations.
+                        // AVX512 implies all other optimizations.
+                        $crate::classification::simd::SimdTag::Avx512 => {
+                            assert!(conf.fast_quotes());
+                            assert!(conf.fast_popcnt());
+                            let $simd = $crate::classification::simd::ResolvedSimd::<
+                                $crate::classification::quotes::avx512_64::Constructor,
+                                $crate::classification::structural::avx512_64::Constructor,
+                                $crate::classification::depth::avx512_64::Constructor,
+                                $crate::classification::memmem::avx512_64::Constructor,
+                                {$crate::classification::simd::AVX512_PCLMULQDQ_POPCNT},
+                            >::new();
+                            $b
+                        }
+                        // AVX2 implies all optimizations other than 512.
                         $crate::classification::simd::SimdTag::Avx2 => {
                             assert!(conf.fast_quotes());
                             assert!(conf.fast_popcnt());
@@ -798,6 +867,7 @@ cfg_if! {
                             >::new();
                             $b
                         }
+                        $crate::classification::simd::SimdTag::Neon => unreachable!("NEON should never be configured on non-ARM targets")
                     }
                 }
             };
@@ -811,6 +881,7 @@ cfg_if! {
 
                     match conf.highest_simd() {
                         // AVX2 implies all other optimizations.
+                        $crate::classification::simd::SimdTag::Avx512 => unreachable!("Avx512 should never be configured on 32-bit targets."),
                         $crate::classification::simd::SimdTag::Avx2 => {
                             assert!(conf.fast_quotes());
                             assert!(conf.fast_popcnt());
@@ -924,7 +995,54 @@ cfg_if! {
                                 {$crate::classification::simd::NOSIMD}
                             >::new();
                             $b
+                        },
+                        $crate::classification::simd::SimdTag::Neon => unreachable!("NEON should never be configured on non-ARM targets"),
+                    }
+                }
+            };
+        }
+    }
+    else if #[cfg(target_arch = "aarch64")] {
+        macro_rules! config_simd {
+            ($conf:expr => |$simd:ident| $b:block) => {
+                {
+                    let conf = $conf;
+
+                    match conf.highest_simd() {
+                        $crate::classification::simd::SimdTag::Neon => {
+                            assert!(conf.fast_popcnt());
+                            if conf.fast_quotes() {
+                                let $simd = $crate::classification::simd::ResolvedSimd::<
+                                    $crate::classification::quotes::neon_64::Constructor,
+                                    $crate::classification::structural::neon_64::Constructor,
+                                    $crate::classification::depth::neon_64::Constructor,
+                                    $crate::classification::memmem::neon_64::Constructor,
+                                    {$crate::classification::simd::NEON},
+                                >::new();
+                                $b
+                            } else {
+                                let $simd = $crate::classification::simd::ResolvedSimd::<
+                                    $crate::classification::quotes::nosimd::Constructor,
+                                    $crate::classification::structural::neon_64::Constructor,
+                                    $crate::classification::depth::neon_64::Constructor,
+                                    $crate::classification::memmem::neon_64::Constructor,
+                                    {$crate::classification::simd::NEON},
+                                >::new();
+                                $b
+                            }
                         }
+                        // nosimd denies all optimizations.
+                        $crate::classification::simd::SimdTag::Nosimd => {
+                            let $simd = $crate::classification::simd::ResolvedSimd::<
+                                $crate::classification::quotes::nosimd::Constructor,
+                                $crate::classification::structural::nosimd::Constructor,
+                                $crate::classification::depth::nosimd::Constructor,
+                                $crate::classification::memmem::nosimd::Constructor,
+                                {$crate::classification::simd::NOSIMD}
+                            >::new();
+                            $b
+                        }
+                        _ => unreachable!("non-NEON features should never be configured on ARM targets"),
                     }
                 }
             };

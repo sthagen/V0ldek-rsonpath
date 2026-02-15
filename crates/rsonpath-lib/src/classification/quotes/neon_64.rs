@@ -1,20 +1,20 @@
 use super::{
-    shared::{mask_64, vector_256},
+    shared::{mask_neon, vector_neon},
     *,
 };
 use crate::{block, classification::mask::m64, debug, input::error::InputErrorConvertible as _};
 use std::marker::PhantomData;
 
-shared::quote_classifier!(Avx2QuoteClassifier64, BlockAvx2Classifier, 64, u64);
+super::shared::quote_classifier!(NeonQuoteClassifier, BlockNeonClassifier, 64, u64);
 
-struct BlockAvx2Classifier {
-    internal_classifier: mask_64::BlockClassifier64Bit,
+struct BlockNeonClassifier {
+    internal_classifier: mask_neon::BlockClassifierNeon,
 }
 
-impl BlockAvx2Classifier {
+impl BlockNeonClassifier {
     fn new() -> Self {
         Self {
-            internal_classifier: mask_64::BlockClassifier64Bit::new(),
+            internal_classifier: mask_neon::BlockClassifierNeon::new(),
         }
     }
 
@@ -22,12 +22,25 @@ impl BlockAvx2Classifier {
     unsafe fn classify<'a, B: InputBlock<'a, 64>>(&mut self, blocks: &B) -> u64 {
         block!(blocks[..64]);
 
-        let (block1, block2) = blocks.halves();
-        let classification1 = vector_256::classify_block(block1);
-        let classification2 = vector_256::classify_block(block2);
+        let (block1, block2, block3, block4) = blocks.quarters();
 
-        let slashes = m64::combine_32(classification1.slashes, classification2.slashes);
-        let quotes = m64::combine_32(classification1.quotes, classification2.quotes);
+        let classification1 = vector_neon::classify_block(block1);
+        let classification2 = vector_neon::classify_block(block2);
+        let classification3 = vector_neon::classify_block(block3);
+        let classification4 = vector_neon::classify_block(block4);
+
+        let slashes = m64::combine_16(
+            classification1.slashes,
+            classification2.slashes,
+            classification3.slashes,
+            classification4.slashes,
+        );
+        let quotes = m64::combine_16(
+            classification1.quotes,
+            classification2.quotes,
+            classification3.quotes,
+            classification4.quotes,
+        );
 
         self.internal_classifier.classify(slashes, quotes)
     }
@@ -46,12 +59,18 @@ mod tests {
     #[test_case("", 0)]
     #[test_case("abcd", 0)]
     #[test_case(r#""abcd""#, 0b01_1111)]
-    #[test_case(r#""num": 42, "string": "something" "#, 0b0_0111_1111_1110_0011_1111_1000_0000_1111)]
+    #[test_case(
+        r#""number": 42, "string": "something" "#,
+        0b0011_1111_1111_0001_1111_1100_0000_0111_1111
+    )]
     #[test_case(r#"abc\"abc\""#, 0b00_0000_0000)]
     #[test_case(r#"abc\\"abc\\""#, 0b0111_1110_0000)]
-    #[test_case(r#"{"aaa":[{},{"b":{"c":[1,2,3]}}],"#, 0b0000_0000_0000_0110_0011_0000_0001_1110)]
+    #[test_case(
+        r#"{"aaa":[{},{"b":{"c":[1,2,3]}}],"e":{"a":[[],[1,2,3],"#,
+        0b0_0000_0000_0000_0110_0011_0000_0000_0000_0110_0011_0000_0001_1110
+    )]
     fn single_block(str: &str, expected: u64) {
-        if !std::arch::is_x86_feature_detected!("avx2") {
+        if !std::arch::is_aarch64_feature_detected!("neon") {
             return;
         }
 

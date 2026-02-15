@@ -2,12 +2,18 @@
 pub(super) mod mask_32;
 #[cfg(target_arch = "x86_64")]
 pub(super) mod mask_64;
+#[cfg(target_arch = "aarch64")]
+pub(super) mod mask_neon;
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub(super) mod vector_128;
 #[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
 pub(super) mod vector_256;
+#[cfg(target_arch = "x86_64")]
+pub(super) mod vector_512;
+#[cfg(target_arch = "aarch64")]
+pub(super) mod vector_neon;
 
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64", target_arch = "aarch64"))]
 macro_rules! quote_classifier {
     ($name:ident, $core:ident, $size:literal, $mask_ty:ty) => {
         pub(crate) struct Constructor;
@@ -131,5 +137,5 @@ macro_rules! quote_classifier {
     };
 }
 
-#[cfg(any(target_arch = "x86", target_arch = "x86_64"))]
+#[cfg(any(target_arch = "x86", target_arch = "x86_64", target_arch = "aarch64"))]
 pub(crate) use quote_classifier;

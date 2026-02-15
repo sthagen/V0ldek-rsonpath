@@ -1,4 +1,4 @@
-use super::{shared::mask_64, shared::vector_256, *};
+use super::{shared::mask_64, shared::vector_neon, *};
 use crate::{
     classification::mask::m64,
     input::{error::InputErrorConvertible as _, InputBlock as _, InputBlockIterator as _},
@@ -10,7 +10,7 @@ pub(crate) struct Constructor;
 
 impl MemmemImpl for Constructor {
     type Classifier<'i, 'b, 'r, I, R>
-        = Avx2MemmemClassifier64<'i, 'b, 'r, I, R>
+        = NeonMemmemClassifier64<'i, 'b, 'r, I, R>
     where
         I: Input + 'i,
         <I as Input>::BlockIterator<'i, 'r, R, BLOCK_SIZE>: 'b,
@@ -30,7 +30,7 @@ impl MemmemImpl for Constructor {
     }
 }
 
-pub(crate) struct Avx2MemmemClassifier64<'i, 'b, 'r, I, R>
+pub(crate) struct NeonMemmemClassifier64<'i, 'b, 'r, I, R>
 where
     I: Input,
     R: InputRecorder<I::Block<'i, SIZE>> + 'r,
@@ -39,7 +39,7 @@ where
     iter: &'b mut I::BlockIterator<'i, 'r, R, SIZE>,
 }
 
-impl<'i, 'b, 'r, I, R> Avx2MemmemClassifier64<'i, 'b, 'r, I, R>
+impl<'i, 'b, 'r, I, R> NeonMemmemClassifier64<'i, 'b, 'r, I, R>
 where
     I: Input,
     R: InputRecorder<I::Block<'i, SIZE>>,
@@ -51,16 +51,28 @@ where
         label: &StringPattern,
         mut offset: usize,
     ) -> Result<Option<(usize, I::Block<'i, SIZE>)>, InputError> {
-        let classifier = vector_256::BlockClassifier256::new(b'"', b'"');
+        let classifier = vector_neon::BlockClassifierNeon::new(b'"', b'"');
         let mut previous_block: u64 = 0;
 
         while let Some(block) = self.iter.next().e()? {
-            let (block1, block2) = block.halves();
+            let (block1, block2, block3, block4) = block.quarters();
             let classified1 = classifier.classify_block(block1);
             let classified2 = classifier.classify_block(block2);
+            let classified3 = classifier.classify_block(block3);
+            let classified4 = classifier.classify_block(block4);
 
-            let first_bitmask = m64::combine_32(classified1.first, classified2.first);
-            let second_bitmask = m64::combine_32(classified1.second, classified2.second);
+            let first_bitmask = m64::combine_16(
+                classified1.first,
+                classified2.first,
+                classified3.first,
+                classified4.first,
+            );
+            let second_bitmask = m64::combine_16(
+                classified1.second,
+                classified2.second,
+                classified3.second,
+                classified4.second,
+            );
 
             let mut result = (previous_block | (first_bitmask << 1)) & second_bitmask;
             while result != 0 {
@@ -91,16 +103,28 @@ where
         label: &StringPattern,
         mut offset: usize,
     ) -> Result<Option<(usize, I::Block<'i, SIZE>)>, InputError> {
-        let classifier = vector_256::BlockClassifier256::new(label.unquoted()[0], b'"');
+        let classifier = vector_neon::BlockClassifierNeon::new(label.unquoted()[0], b'"');
         let mut previous_block: u64 = 0;
 
         while let Some(block) = self.iter.next().e()? {
-            let (block1, block2) = block.halves();
+            let (block1, block2, block3, block4) = block.quarters();
             let classified1 = classifier.classify_block(block1);
             let classified2 = classifier.classify_block(block2);
+            let classified3 = classifier.classify_block(block3);
+            let classified4 = classifier.classify_block(block4);
 
-            let first_bitmask = m64::combine_32(classified1.first, classified2.first);
-            let second_bitmask = m64::combine_32(classified1.second, classified2.second);
+            let first_bitmask = m64::combine_16(
+                classified1.first,
+                classified2.first,
+                classified3.first,
+                classified4.first,
+            );
+            let second_bitmask = m64::combine_16(
+                classified1.second,
+                classified2.second,
+                classified3.second,
+                classified4.second,
+            );
 
             if let Some(res) =
                 mask_64::find_in_mask(self.input, label, previous_block, first_bitmask, second_bitmask, offset)?
@@ -116,7 +140,7 @@ where
     }
 
     #[inline(always)]
-    unsafe fn find_label_avx2(
+    unsafe fn find_label_neon(
         &mut self,
         label: &StringPattern,
         mut offset: usize,
@@ -127,29 +151,44 @@ where
             return self.find_letter(label, offset);
         }
 
-        let classifier = vector_256::BlockClassifier256::new(label.unquoted()[0], label.unquoted()[1]);
+        let classifier = vector_neon::BlockClassifierNeon::new(label.unquoted()[0], label.unquoted()[1]);
         let mut previous_block: u64 = 0;
+
         while let Some(block) = self.iter.next().e()? {
-            let (block1, block2) = block.halves();
+            let (block1, block2, block3, block4) = block.quarters();
             let classified1 = classifier.classify_block(block1);
             let classified2 = classifier.classify_block(block2);
+            let classified3 = classifier.classify_block(block3);
+            let classified4 = classifier.classify_block(block4);
 
-            let first_bitmask = m64::combine_32(classified1.first, classified2.first);
-            let second_bitmask = m64::combine_32(classified1.second, classified2.second);
+            let first_bitmask = m64::combine_16(
+                classified1.first,
+                classified2.first,
+                classified3.first,
+                classified4.first,
+            );
+            let second_bitmask = m64::combine_16(
+                classified1.second,
+                classified2.second,
+                classified3.second,
+                classified4.second,
+            );
 
             if let Some(res) =
                 mask_64::find_in_mask(self.input, label, previous_block, first_bitmask, second_bitmask, offset)?
             {
                 return Ok(Some((res, block)));
             }
+
             offset += SIZE;
             previous_block = first_bitmask >> (SIZE - 1);
         }
+
         Ok(None)
     }
 }
 
-impl<'i, 'b, 'r, I, R> Memmem<'i, 'b, 'r, I, SIZE> for Avx2MemmemClassifier64<'i, 'b, 'r, I, R>
+impl<'i, 'b, 'r, I, R> Memmem<'i, 'b, 'r, I, SIZE> for NeonMemmemClassifier64<'i, 'b, 'r, I, R>
 where
     I: Input,
     R: InputRecorder<I::Block<'i, SIZE>>,
@@ -169,6 +208,6 @@ where
         }
         let next_block_offset = self.iter.get_offset();
         // SAFETY: target feature invariant
-        unsafe { self.find_label_avx2(label, next_block_offset) }
+        unsafe { self.find_label_neon(label, next_block_offset) }
     }
 }

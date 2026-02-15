@@ -6,6 +6,16 @@ pub(crate) trait Mask {
         Self: Shl<N, Output = Self>;
 }
 
+impl Mask for u128 {
+    #[inline(always)]
+    fn is_lit<N>(&self, bit: N) -> bool
+    where
+        Self: Shl<N, Output = Self>,
+    {
+        (*self & (1 << bit)) != 0
+    }
+}
+
 impl Mask for u64 {
     #[inline(always)]
     fn is_lit<N>(&self, bit: N) -> bool
@@ -43,12 +53,13 @@ pub(crate) mod m32 {
     }
 }
 
-#[cfg(target_arch = "x86_64")]
+#[cfg(any(target_arch = "x86_64", target_arch = "aarch64"))]
 pub(crate) mod m64 {
     pub(crate) fn combine_16(m1: u16, m2: u16, m3: u16, m4: u16) -> u64 {
         u64::from(m1) | (u64::from(m2) << 16) | (u64::from(m3) << 32) | (u64::from(m4) << 48)
     }
 
+    #[cfg(target_arch = "x86_64")]
     pub(crate) fn combine_32(m1: u32, m2: u32) -> u64 {
         u64::from(m1) | (u64::from(m2) << 32)
     }
