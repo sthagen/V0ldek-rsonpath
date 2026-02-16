@@ -2,17 +2,17 @@
 
 [![Rust](https://github.com/V0ldek/rsonpath/actions/workflows/rust.yml/badge.svg)](https://github.com/V0ldek/rsonpath/actions/workflows/rust.yml)
 [![docs.rs](https://img.shields.io/docsrs/rsonpath-lib?logo=docs.rs)](https://docs.rs/crate/rsonpath-lib/latest)
-[![Book](https://img.shields.io/badge/book-available-4DC720?logo=mdbook)](https://v0ldek.github.io/rsonpath/)
+[![Book](https://img.shields.io/badge/book-available-4DC720?logo=mdbook)](https://rsonquery.github.io/rsonpath/)
 
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/7790/badge)](https://www.bestpractices.dev/projects/7790)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/V0ldek/rsonpath/badge)](https://securityscorecards.dev/viewer/?uri=github.com/V0ldek/rsonpath)
-[![fuzzing](https://github.com/V0ldek/rsonpath/actions/workflows/clusterfuzzlite-batch.yml/badge.svg)](https://github.com/V0ldek/rsonpath/actions/workflows/clusterfuzzlite-batch.yml)
+[![fuzzing](https://github.com/V0ldek/rsonpath/actions/workflows/clusterfuzzlite-batch.yml/badge.svg)](https://github.com/rsonquery/rsonpath/actions/workflows/clusterfuzzlite-batch.yml)
 
 [![Crates.io](https://img.shields.io/crates/v/rsonpath?logo=docs.rs)](https://crates.io/crates/rsonpath)
-[![GitHub Release Date](https://img.shields.io/github/release-date/v0ldek/rsonpath?logo=github)](https://github.com/V0ldek/rsonpath/releases)
-[![GitHub last commit](https://img.shields.io/github/last-commit/v0ldek/rsonpath?logo=github)](https://github.com/V0ldek/rsonpath/commits/main)
+[![GitHub Release Date](https://img.shields.io/github/release-date/v0ldek/rsonpath?logo=github)](https://github.com/rsonquery/rsonpath/releases)
+[![GitHub last commit](https://img.shields.io/github/last-commit/v0ldek/rsonpath?logo=github)](https://github.com/rsonquery/rsonpath/commits/main)
 
-![MSRV](https://img.shields.io/badge/msrv-v1.67.1-orange?logo=rust "Minimum Supported Rust Version for `rsonpath-lib`")
+![MSRV](https://img.shields.io/badge/msrv-v1.89.0-orange?logo=rust "Minimum Supported Rust Version for `rsonpath-lib`")
 [![License](https://img.shields.io/crates/l/rsonpath)](https://choosealicense.com/licenses/mit/)
 
 Experimental JSONPath engine for querying massive streamed datasets.
@@ -50,7 +50,7 @@ For other result modes consult the `--help` usage page.
 
 ## Installation
 
-See [Releases](https://github.com/V0ldek/rsonpath/releases/latest) for precompiled binaries for
+See [Releases](https://github.com/rsonquery/rsonpath/releases/latest) for precompiled binaries for
 all first-class support targets.
 
 ### `cargo`
@@ -100,11 +100,11 @@ A query is a sequence of segments, each containing one or more selectors.
 | Wildcard                                 | `.*`, `..*`, `[*]`               | ✔️        | v0.4.0 |                |
 | Index (array index)                      | `[<index>]`                      | ✔️        | v0.5.0 |                |
 | Index (array index from end)             | `[-<index>]`                     | ❌        |        |                |
-| Array slice (forward, positive bounds)   | `[<start>:<end>:<step>]`         | ✔️        | v0.9.0       | [#152](https://github.com/V0ldek/rsonpath/issues/152) |
+| Array slice (forward, positive bounds)   | `[<start>:<end>:<step>]`         | ✔️        | v0.9.0       | [#152](https://github.com/rsonquery/rsonpath/issues/152) |
 | Array slice (forward, arbitrary bounds)  | `[<start>:<end>:<step>]`         | ❌        |        |                |
 | Array slice (backward, arbitrary bounds) | `[<start>:<end>:-<step>]`        | ❌        |        |                |
-| Filters &ndash; existential tests        | `[?<path>]`                      | ❌        |        | [#154](https://github.com/V0ldek/rsonpath/issues/154) |
-| Filters &ndash; const atom comparisons   | `[?<path> <binop> <atom>]`       | ❌        |        | [#156](https://github.com/V0ldek/rsonpath/issues/156) |
+| Filters &ndash; existential tests        | `[?<path>]`                      | ❌        |        | [#154](https://github.com/rsonquery/rsonpath/issues/154) |
+| Filters &ndash; const atom comparisons   | `[?<path> <binop> <atom>]`       | ❌        |        | [#156](https://github.com/rsonquery/rsonpath/issues/156) |
 | Filters &ndash; logical expressions      | `&&`, `\|\|`, `!`                | ❌        |        |                |
 | Filters &ndash; nesting                  | `[?<expr>[?<expr>]...]`          | ❌        |        |                |
 | Filters &ndash; arbitrary comparisons    | `[?<path> <binop> <path>]`       | ❌        |        |                |
@@ -178,7 +178,7 @@ The engine does _not_ parse unicode escape sequences in member names.
 This means that a key `"a"` is different from a key `"\u0041"`, even though semantically they represent the same string.
 This is actually as-designed with respect to the current JSONPath spec.
 Parsing unicode sequences is costly, so the support for this was postponed
-in favour of high performance. This is tracked as [#117](https://github.com/v0ldek/rsonpath/issues/117).
+in favour of high performance. This is tracked as [#117](https://github.com/rsonquery/rsonpath/issues/117).
 
 ## Contributing
 
