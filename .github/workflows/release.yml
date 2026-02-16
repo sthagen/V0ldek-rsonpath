@@ -161,10 +161,10 @@ jobs:
         env:
           RUSTFLAGS: ${{ matrix.rustflags }}
       - name: Rename binary (Unix)
-        if: matrix.os != 'windows-latest'
+        if: matrix.os != 'windows-latest' && matrix.os != 'windows-11-arm'
         run: rm -f target/distribution/rq-${{ matrix.target_triple }} && mv -f "target/${{ matrix.target_triple }}/distribution/rq" target/distribution/rq-${{ matrix.target_triple }}
       - name: Rename binary (Windows)
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-latest' || matrix.os == 'windows-11-arm'
         run: mv -Force "target/${{ matrix.target_triple }}/distribution/rq.exe" target/distribution/rq-${{ matrix.target_triple }}.exe
       - name: Upload the binary as artifact
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
