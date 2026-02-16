@@ -1,16 +1,16 @@
 # rsonpath &ndash; SIMD-powered JSONPath 🚀 <img src="img/rsonquery-logo.svg" width="50em" align="left" />
 
-[![Rust](https://github.com/V0ldek/rsonpath/actions/workflows/rust.yml/badge.svg)](https://github.com/V0ldek/rsonpath/actions/workflows/rust.yml)
+[![Rust](https://github.com/rsonquery/rsonpath/actions/workflows/rust.yml/badge.svg)](https://github.com/rsonquery/rsonpath/actions/workflows/rust.yml)
 [![docs.rs](https://img.shields.io/docsrs/rsonpath-lib?logo=docs.rs)](https://docs.rs/crate/rsonpath-lib/latest)
 [![Book](https://img.shields.io/badge/book-available-4DC720?logo=mdbook)](https://rsonquery.github.io/rsonpath/)
 
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/7790/badge)](https://www.bestpractices.dev/projects/7790)
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/V0ldek/rsonpath/badge)](https://securityscorecards.dev/viewer/?uri=github.com/V0ldek/rsonpath)
-[![fuzzing](https://github.com/V0ldek/rsonpath/actions/workflows/clusterfuzzlite-batch.yml/badge.svg)](https://github.com/rsonquery/rsonpath/actions/workflows/clusterfuzzlite-batch.yml)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/rsonquery/rsonpath/badge)](https://securityscorecards.dev/viewer/?uri=github.com/rsonquery/rsonpath)
+[![fuzzing](https://github.com/rsonquery/rsonpath/actions/workflows/clusterfuzzlite-batch.yml/badge.svg)](https://github.com/rsonquery/rsonpath/actions/workflows/clusterfuzzlite-batch.yml)
 
 [![Crates.io](https://img.shields.io/crates/v/rsonpath?logo=docs.rs)](https://crates.io/crates/rsonpath)
-[![GitHub Release Date](https://img.shields.io/github/release-date/v0ldek/rsonpath?logo=github)](https://github.com/rsonquery/rsonpath/releases)
-[![GitHub last commit](https://img.shields.io/github/last-commit/v0ldek/rsonpath?logo=github)](https://github.com/rsonquery/rsonpath/commits/main)
+[![GitHub Release Date](https://img.shields.io/github/release-date/rsonquery/rsonpath?logo=github)](https://github.com/rsonquery/rsonpath/releases)
+[![GitHub last commit](https://img.shields.io/github/last-commit/rsonquery/rsonpath?logo=github)](https://github.com/rsonquery/rsonpath/commits/main)
 
 ![MSRV](https://img.shields.io/badge/msrv-v1.89.0-orange?logo=rust "Minimum Supported Rust Version for `rsonpath-lib`")
 [![License](https://img.shields.io/crates/l/rsonpath)](https://choosealicense.com/licenses/mit/)
