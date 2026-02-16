@@ -56,6 +56,7 @@ jobs:
           - os: macos-latest
             target_triple: aarch64-apple-darwin
             rustflags: "-C link-arg=-fuse-ld=lld --deny warnings"
+            prologue-script: brew install lld
           - os: windows-11-arm
             target_triple: aarch64-pc-windows-msvc
             # lld on Windows uses extreme amounts of memory for debuginfo=2
