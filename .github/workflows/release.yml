@@ -65,6 +65,7 @@ jobs:
           - os: macos-latest
             target_triple: aarch64-apple-darwin
             rustflags: "-C link-arg=-fuse-ld=lld --deny warnings"
+            prologue-script: brew install lld
           - os: windows-11-arm
             target_triple: aarch64-pc-windows-msvc
             rustflags: "-C link-arg=-fuse-ld=lld --deny warnings"
@@ -93,14 +94,18 @@ jobs:
           - os: ubuntu-24.04-arm
             target_triple: aarch64-unknown-linux-musl
             rustflags: "-C link-arg=-fuse-ld=lld --deny warnings"
+            # This target needs special setup.
+            prologue-script: sudo apt update && sudo apt install musl-tools
           - os: ubuntu-latest
             target_triple: i686-unknown-linux-musl
+            rustflags: "-C link-arg=-fuse-ld=lld --deny warnings"
             # This target needs special setup.
-            prologue-script: sudo apt update && sudo apt install gcc-multilib
+            prologue-script: sudo apt update && sudo apt install gcc-multilib musl-tools
           - os: ubuntu-latest
             target_triple: x86_64-unknown-linux-musl
+            rustflags: "-C link-arg=-fuse-ld=lld --deny warnings"
             # This target needs special setup.
-            prologue-script: sudo apt update && sudo apt install gcc-multilib
+            prologue-script: sudo apt update && sudo apt install gcc-multilib musl-tools
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
