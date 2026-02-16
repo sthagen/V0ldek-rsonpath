@@ -1,23 +1,23 @@
 # How to contribute
 
 - Found a bug? Check if it was reported yet as a
-[![GitHub issues by-label](https://img.shields.io/github/issues/v0ldek/rsonpath/type:%20bug?color=%23d73a4a&label=bug&logo=github)](https://github.com/V0ldek/rsonpath/labels/type%3A%20bug),
-if not then file a new [bug issue](https://github.com/V0ldek/rsonpath/issues/new?labels=type%3A+bug&template=bug_report.md)
+[![GitHub issues by-label](https://img.shields.io/github/issues/rsonquery/rsonpath/type:%20bug?color=%23d73a4a&label=bug&logo=github)](https://github.com/rsonquery/rsonpath/labels/type%3A%20bug),
+if not then file a new [bug issue](https://github.com/rsonquery/rsonpath/issues/new?labels=type%3A+bug&template=bug_report.md)
 - Want an enchancement? Check if it's already proposed as a
-[![feature issues](https://img.shields.io/github/issues/v0ldek/rsonpath/type:%20feature?color=%23b2feff&label=feature&logo=github)](https://github.com/V0ldek/rsonpath/labels/type%3A%20feature)
-, if not then file a new [feature issue](https://github.com/V0ldek/rsonpath/issues/new?labels=type%253A+feature&template=feature_request.md)
+[![feature issues](https://img.shields.io/github/issues/rsonquery/rsonpath/type:%20feature?color=%23b2feff&label=feature&logo=github)](https://github.com/rsonquery/rsonpath/labels/type%3A%20feature)
+, if not then file a new [feature issue](https://github.com/rsonquery/rsonpath/issues/new?labels=type%253A+feature&template=feature_request.md)
 
 Every newly created issue gets assigned the
-[![triage issues](https://img.shields.io/github/issues/v0ldek/rsonpath/acceptance:%20triage?color=%2384A6B5&label=acceptance%3A%20triage&logo=github)](https://github.com/V0ldek/rsonpath/labels/acceptance%3A%20triage)
+[![triage issues](https://img.shields.io/github/issues/rsonquery/rsonpath/acceptance:%20triage?color=%2384A6B5&label=acceptance%3A%20triage&logo=github)](https://github.com/rsonquery/rsonpath/labels/acceptance%3A%20triage)
 label. Once reviewed,
 it will be assigned a milestone and the label will be exchanged for
-[![go ahead issues](https://img.shields.io/github/issues/v0ldek/rsonpath/acceptance:%20go%20ahead?color=%23FF4400&label=acceptance%3A%20go%20ahead&logo=github)](https://github.com/V0ldek/rsonpath/labels/acceptance%3A%20go%20ahead)
+[![go ahead issues](https://img.shields.io/github/issues/rsonquery/rsonpath/acceptance:%20go%20ahead?color=%23FF4400&label=acceptance%3A%20go%20ahead&logo=github)](https://github.com/rsonquery/rsonpath/labels/acceptance%3A%20go%20ahead)
 to signal it is of value to the project and
 can be worked on (for a feature), or that it is indeed a bug that we need to fix (for a bug).
 
 ## Not sure?
 
-Go to [Discussions](https://github.com/V0ldek/rsonpath/discussions), where you can drop more open-ended questions and ideas without having to formulate them as detailed Issues!
+Go to [Discussions](https://github.com/rsonquery/rsonpath/discussions), where you can drop more open-ended questions and ideas without having to formulate them as detailed Issues!
 
 ## Strict no-LLM policy
 
@@ -33,19 +33,19 @@ Violation of this policy is subject to a ban.
 
 You want to write code for the crate? Great! First, you need an issue to contribute to,
 one marked as
-[![go ahead issues](https://img.shields.io/github/issues/v0ldek/rsonpath/acceptance:%20go%20ahead?color=%23FF4400&label=acceptance%3A%20go%20ahead&logo=github)](https://github.com/V0ldek/rsonpath/labels/acceptance%3A%20go%20ahead).
+[![go ahead issues](https://img.shields.io/github/issues/rsonquery/rsonpath/acceptance:%20go%20ahead?color=%23FF4400&label=acceptance%3A%20go%20ahead&logo=github)](https://github.com/rsonquery/rsonpath/labels/acceptance%3A%20go%20ahead).
 You can use
-[![help wanted issues](https://img.shields.io/github/issues/v0ldek/rsonpath/contribute:%20help%20wanted?color=%23008672&label=contribute%3A%20help%20wanted&logo=github)](https://github.com/V0ldek/rsonpath/labels/contribute%3A%20help%20wanted),
+[![help wanted issues](https://img.shields.io/github/issues/rsonquery/rsonpath/contribute:%20help%20wanted?color=%23008672&label=contribute%3A%20help%20wanted&logo=github)](https://github.com/rsonquery/rsonpath/labels/contribute%3A%20help%20wanted),
 meaning "I'd be very happy if someone implemented this",
 or
-[![good first issue issues](https://img.shields.io/github/issues/v0ldek/rsonpath/contribute:%20good%20first%20issue?color=%23008672&label=contribute%3A%20good%20first%20issue&logo=github)](https://github.com/V0ldek/rsonpath/labels/contribute%3A%20good%20first%20issue),
+[![good first issue issues](https://img.shields.io/github/issues/rsonquery/rsonpath/contribute:%20good%20first%20issue?color=%23008672&label=contribute%3A%20good%20first%20issue&logo=github)](https://github.com/rsonquery/rsonpath/labels/contribute%3A%20good%20first%20issue),
 meaning "I'd be happy if someone implemented this and it's relatively straightforward".
-Go to the issue and post a comment that you're going to work on it. [Fork the repo](https://github.com/V0ldek/rsonpath/fork),
+Go to the issue and post a comment that you're going to work on it. [Fork the repo](https://github.com/rsonquery/rsonpath/fork),
 write your feature of fix, then create a PR.
 
 ### Setting up local development
 
-[Fork the repo](https://github.com/V0ldek/rsonpath/fork) and clone the repository locally.
+[Fork the repo](https://github.com/rsonquery/rsonpath/fork) and clone the repository locally.
 
 You will need Rust/`cargo` installed and `just`.
 
