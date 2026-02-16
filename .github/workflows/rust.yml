@@ -64,7 +64,7 @@ jobs:
             target_triple: aarch64-unknown-linux-gnu
             rustflags: "-C link-arg=-fuse-ld=lld --deny warnings"
           - os: windows-latest
-            target_triple: i686-pc-windows-gnu
+            target_triple: i686-pc-windows-msvc
             # This target needs special setup with MinGW.
             needs-mingw: x86
             # lld on Windows uses extreme amounts of memory for debuginfo=2
