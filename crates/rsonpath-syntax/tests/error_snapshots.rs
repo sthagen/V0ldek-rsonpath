@@ -835,6 +835,165 @@ mod escaped_sequence_suggestions {
     }
 }
 
+/// Verify that a filter expression error produced at end of input is properly highlighted
+mod filter_error_at_end_of_input {
+    use insta::assert_snapshot;
+    use rsonpath_syntax::parse;
+
+    #[test]
+    fn incomplete_filter_selector() {
+        let result = parse("$.a[?").expect_err("should fail to parse");
+        assert_snapshot!(result, @"
+        error: invalid filter expression syntax
+
+          $.a[?
+               ^ not a valid filter expression
+          (byte 5)
+
+
+        error: bracketed selection is not closed
+
+          $.a[?
+               ^ expected a closing bracket ']'
+          (byte 5)
+        ");
+    }
+
+    #[test]
+    fn filter_comparison_missing_rhs() {
+        let result = parse("$[?@.b ==").expect_err("should fail to parse");
+        assert_snapshot!(result, @"
+        error: invalid right-hand side of comparison
+
+          $[?@.b ==
+                   ^ expected a literal or a filter query here
+          (byte 9)
+
+
+        error: bracketed selection is not closed
+
+          $[?@.b ==
+                   ^ expected a closing bracket ']'
+          (byte 9)
+        ");
+    }
+}
+
+mod missing_at_end {
+    use insta::assert_snapshot;
+    use rsonpath_syntax::parse;
+
+    #[test]
+    fn missing_after_child() {
+        let src = "$.";
+        let result = parse(src).expect_err("should fail to parse");
+
+        assert_snapshot!(result, @"
+        error: invalid selector - empty
+
+          $.
+           ^^ expected a selector here, but found nothing
+          (bytes 1-2)
+
+        note: if you meant to match any value, you should use the wildcard selector `*`
+        suggestion: did you mean `$.*` ?
+        ");
+    }
+
+    #[test]
+    fn missing_after_descendant() {
+        let src = "$..";
+        let result = parse(src).expect_err("should fail to parse");
+
+        assert_snapshot!(result, @"
+        error: invalid selector - empty
+
+          $..
+            ^^ expected a selector here, but found nothing
+          (bytes 2-3)
+
+        note: if you meant to match any value, you should use the wildcard selector `*`
+        suggestion: did you mean `$..*` ?
+        ");
+    }
+
+    #[test]
+    fn missing_after_bracket() {
+        let src = "$[";
+        let result = parse(src).expect_err("should fail to parse");
+
+        assert_snapshot!(result, @"
+        error: invalid selector - empty
+
+          $[
+           ^^ expected a selector here, but found nothing
+          (bytes 1-2)
+
+        note: if you meant to match any value, you should use the wildcard selector `*`
+        error: bracketed selection is not closed
+
+          $[
+            ^ expected a closing bracket ']'
+          (byte 2)
+
+
+        suggestion: did you mean `$[*]` ?
+        ");
+    }
+
+    #[test]
+    fn missing_in_brackets() {
+        let src = "$[]";
+        let result = parse(src).expect_err("should fail to parse");
+
+        assert_snapshot!(result, @"
+        error: invalid selector - empty
+
+          $[]
+           ^^ expected a selector here, but found nothing
+          (bytes 1-2)
+
+        note: if you meant to match any value, you should use the wildcard selector `*`
+        suggestion: did you mean `$[*]` ?
+        ");
+    }
+
+    #[test]
+    fn missing_after_paren() {
+        let src = "$[?(";
+        let result = parse(src).expect_err("should fail to parse");
+
+        assert_snapshot!(result, @"
+        error: invalid filter expression syntax
+
+          $[?(
+              ^ not a valid filter expression
+          (byte 4)
+
+
+        error: bracketed selection is not closed
+
+          $[?(
+              ^ expected a closing bracket ']'
+          (byte 4)
+        ");
+    }
+
+    #[test]
+    fn missing_in_parens() {
+        let src = "$[?()]";
+        let result = parse(src).expect_err("should fail to parse");
+
+        assert_snapshot!(result, @"
+        error: invalid filter expression syntax
+
+          $[?()]
+              ^ not a valid filter expression
+          (byte 4)
+        ");
+    }
+}
+
 mod multiline {
     // These are too long to be useful so we use the out-of-line snapshots.
     use insta::assert_snapshot;
