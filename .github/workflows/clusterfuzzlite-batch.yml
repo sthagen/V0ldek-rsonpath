@@ -7,8 +7,8 @@ on:
         required: true
         default: '4800'
         type: string
-  schedule:
-    - cron: '0 3 * * *'
+  #schedule:
+  #  - cron: '0 3 * * *'
 
 permissions:
   contents: read
